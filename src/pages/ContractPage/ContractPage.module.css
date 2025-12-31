@@ -1,0 +1,164 @@
+/* src/pages/ContractPage/ContractPage.module.css */
+
+.page {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+    background-color: #f4f7f6;
+    padding: 20px;
+    direction: rtl;
+    /* תמיכה בעברית */
+}
+
+.contractCard {
+    background: #ffffff;
+    width: 100%;
+    max-width: 700px;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.contractCard h2 {
+    color: #2d3436;
+    text-align: center;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #00cec9;
+    padding-bottom: 10px;
+}
+
+.scrollText {
+    height: 250px;
+    overflow-y: auto;
+    border: 1px solid #dfe6e9;
+    padding: 15px;
+    background: #fafafa;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin-bottom: 25px;
+    color: #636e72;
+}
+
+.inputs {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.inputs input {
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.3s;
+}
+
+.inputs input:focus {
+    border-color: #00cec9;
+}
+
+.signBtn {
+    width: 100%;
+    padding: 14px;
+    background-color: #0984e3;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.signBtn:hover {
+    background-color: #74b9ff;
+}
+
+/* --- Modal Styles --- */
+
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    padding: 15px;
+}
+
+.modalContent {
+    background: white;
+    width: 100%;
+    max-width: 500px;
+    border-radius: 15px;
+    padding: 20px;
+    text-align: center;
+}
+
+.canvasContainer {
+    border: 2px dashed #b2bec3;
+    margin: 20px 0;
+    background: #fff;
+    border-radius: 10px;
+    touch-action: none;
+    /* קריטי למובייל כדי למנוע גלילה בזמן חתימה */
+}
+
+.sigPad {
+    width: 100%;
+    height: 200px;
+}
+
+.modalActions {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.modalActions button {
+    flex: 1;
+    padding: 10px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.modalActions button:nth-child(1) {
+    background: #fab1a0;
+}
+
+/* נקה */
+.modalActions button:nth-child(2) {
+    background: #55efc4;
+}
+
+/* אשר */
+.modalActions button:nth-child(3) {
+    background: #dfe6e9;
+}
+
+/* ביטול */
+
+/* התאמות למובייל */
+@media (max-width: 600px) {
+    .page {
+        padding: 10px;
+    }
+
+    .contractCard {
+        padding: 15px;
+    }
+
+    .modalContent {
+        width: 95%;
+    }
+}
