@@ -1,0 +1,38 @@
+/* יבוא פונט אחיד לכל המכשירים */
+@import url('https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;700&display=swap');
+
+:root {
+  --purple: rgb(86, 58, 116);
+  --green: rgb(72, 156, 167);
+}
+
+html,
+body {
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+  /* שימוש ב-dvh גם כאן למניעת גלילה */
+  min-height: 100dvh;
+  font-family: 'Rubik', sans-serif;
+  /* הפונט החדש */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  height: 100%;
+  width: 100%;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  /* דורס את הגדרות ברירת המחדל של אייפון */
+  font-family: 'Rubik', sans-serif;
+}
+
+*:focus:not(:focus-visible) {
+  outline: none;
+}
