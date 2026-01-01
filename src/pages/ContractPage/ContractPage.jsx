@@ -1,578 +1,319 @@
-// src/pages/ContractPage/ContractPage.jsx
 import React, { useRef, useState } from "react";
 import SignatureCanvas from "react-signature-canvas";
-import useGymMembers from "../../hooks/useGymMembers";
 import {
+  createMember,
   uploadSignatureImage,
   checkSignatureExists,
 } from "../../services/gymMemberService";
 import styles from "./ContractPage.module.css";
+// לוגו של שק"ל - אם יש לך קובץ תמונה שמור, ניתן לייבא אותו. כרגע נשתמש בטקסט או פלייסהולדר
+// import shekelLogo from "../../assets/shekel_logo.png";
 
 const ContractPage = () => {
-  const { loading, members, addMember, editMember, removeMember } =
-    useGymMembers();
-  const [selectedMember, setSelectedMember] = useState(null);
-  const [contractData, setContractData] = useState(null);
-  const [showAddMemberForm, setShowAddMemberForm] = useState(false);
-  const [showEditMemberForm, setShowEditMemberForm] = useState(false);
-  const [editMemberData, setEditMemberData] = useState({ memberName: "" });
-  const [isUploadingImage, setIsUploadingImage] = useState(false);
-  const [uploadedImagePath, setUploadedImagePath] = useState(null);
-  const [existingSignature, setExistingSignature] = useState(null);
-  const [isCheckingSignature, setIsCheckingSignature] = useState(false);
-  const signatureRef = useRef(null);
-
+  // --- State Management ---
   const [formData, setFormData] = useState({
-    startDate: new Date().toISOString().split("T")[0],
-    endDate: "",
-    monthlyFee: "",
-    paymentMethod: "cash",
-    notes: "",
-    memberName: "",
-    memberID: "",
+    fullName: "",
+    idNumber: "",
   });
 
-  const [newMemberData, setNewMemberData] = useState({
-    memberName: "",
-    memberID: "",
-  });
+  // States for Flowchart Logic
+  const [step, setStep] = useState("form"); // 'form', 'already_signed', 'success'
+  const [showModal, setShowModal] = useState(false);
+  const [isSignButtonAble, setIsSignButtonAble] = useState(false);
+  const [isSendButtonAble, setIsSendButtonAble] = useState(false);
+  const [loading, FLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
-  const handleMemberSelect = (member) => {
-    setSelectedMember(member);
-  };
+  const sigCanvasRef = useRef({});
 
-  const handleNewMemberChange = (e) => {
-    const { name, value } = e.target;
-    setNewMemberData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
+  // --- Handlers ---
 
-  const handleAddNewMember = async () => {
-    if (!newMemberData.memberName || !newMemberData.memberID) {
-      alert("נא למלא את כל השדות");
-      return;
-    }
-
-    try {
-      const createdMember = await addMember(newMemberData);
-      alert("חבר מועדון נוסף בהצלחה!");
-      setNewMemberData({ memberName: "", memberID: "" });
-      setShowAddMemberForm(false);
-      setSelectedMember(createdMember);
-    } catch (err) {
-      alert("שגיאה בהוספת חבר מועדון: " + err.message);
-    }
-  };
-
-  const handleEditMemberChange = (e) => {
-    setEditMemberData({ memberName: e.target.value });
-  };
-
-  const handleStartEdit = () => {
-    setEditMemberData({ memberName: selectedMember.memberName });
-    setShowEditMemberForm(true);
-  };
-
-  const handleUpdateMember = async () => {
-    if (!editMemberData.memberName.trim()) {
-      alert("נא להזין שם");
-      return;
-    }
-
-    try {
-      const updatedMember = await editMember(
-        selectedMember.memberID,
-        editMemberData
-      );
-      alert("חבר מועדון עודכן בהצלחה!");
-      setSelectedMember(updatedMember);
-      setShowEditMemberForm(false);
-      setEditMemberData({ memberName: "" });
-    } catch (err) {
-      alert("שגיאה בעדכון חבר מועדון: " + err.message);
-    }
-  };
-
-  const handleDeleteMember = async (memberID) => {
-    if (!window.confirm("האם אתה בטוח שברצונך למחוק את חבר המועדון?")) {
-      return;
-    }
-
-    try {
-      await removeMember(memberID);
-      alert("חבר מועדון נמחק בהצלחה!");
-      if (selectedMember?.memberID === memberID) {
-        setSelectedMember(null);
-      }
-    } catch (err) {
-      alert("שגיאה במחיקת חבר מועדון: " + err.message);
-    }
-  };
-
+  // עדכון שדות הקלט ובדיקה אם הכפתור הראשי צריך להיות פעיל
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    const updatedData = { ...formData, [name]: value };
+    setFormData(updatedData);
+
+    // Flowchart: "fields full name and ID full -> sign button is Able"
+    if (
+      updatedData.fullName.trim().length > 1 &&
+      updatedData.idNumber.trim().length > 6
+    ) {
+      setIsSignButtonAble(true);
+    } else {
+      setIsSignButtonAble(false);
+    }
+  };
+
+  // לחיצה על "חתום על הנחיות"
+  const handleSignClick = async () => {
+    if (!isSignButtonAble) return;
+
+    FLoading(true);
+    setErrorMsg("");
+
+    try {
+      // Flowchart check: משתמש קיים במערכת? (לפי בדיקת חתימה)
+      const checkResult = await checkSignatureExists(formData.idNumber);
+
+      if (checkResult.exists) {
+        // Branch 1: משתמש קיים -> הודעה שהוא כבר חתם
+        setStep("already_signed");
+      } else {
+        // Branch 2: משתמש לא קיים -> Popup Sign
+        setShowModal(true);
+        // Reset modal state
+        setIsSendButtonAble(false);
+      }
+    } catch (err) {
+      console.error(err);
+      setErrorMsg("אירעה שגיאה בבדיקת הנתונים. נסה שנית.");
+    } finally {
+      FLoading(false);
+    }
+  };
+
+  // זיהוי שהמשתמש התחיל לחתום
+  const handleCanvasBegin = () => {
+    // Flowchart: "Signature area touched -> Send button is Able"
+    setIsSendButtonAble(true);
   };
 
   const handleClearSignature = () => {
-    signatureRef.current?.clear();
-    setUploadedImagePath(null);
-    setExistingSignature(null);
+    sigCanvasRef.current.clear();
+    // Flowchart: "Click clear -> Send button disabled"
+    setIsSendButtonAble(false);
   };
 
-  const handleCheckExistingSignature = async () => {
-    if (!selectedMember) {
-      alert("נא לבחור חבר מועדון קודם");
-      return;
-    }
+  const handleSendForm = async () => {
+    if (!isSendButtonAble) return;
 
+    FLoading(true);
     try {
-      setIsCheckingSignature(true);
-      const result = await checkSignatureExists(selectedMember.memberID);
-
-      if (result.exists) {
-        setExistingSignature(result.imageUrl);
-        alert("נמצאה חתימה קיימת!");
-      } else {
-        setExistingSignature(null);
-        alert("לא נמצאה חתימה קיימת לחבר מועדון זה");
+      // 1. יצירת המשתמש במערכת (אם לא קיים)
+      // אנחנו משתמשים ב-try/catch נפרד כי יכול להיות שהוא קיים אך ללא חתימה
+      try {
+        await createMember({
+          memberName: formData.fullName,
+          memberID: formData.idNumber,
+        });
+      } catch (e) {
+        // מתעלמים משגיאה אם המשתמש כבר קיים (למשל סטטוס 409), וממשיכים להעלאת החתימה
+        console.log(
+          "Member creation skipped or failed, proceeding to signature upload:",
+          e.message
+        );
       }
-    } catch (err) {
-      alert("שגיאה בבדיקת חתימה: " + err.message);
-    } finally {
-      setIsCheckingSignature(false);
-    }
-  };
 
-  const handleUploadSignature = async () => {
-    if (signatureRef.current?.isEmpty()) {
-      alert("נא לחתום על החוזה קודם");
-      return;
-    }
-
-    try {
-      setIsUploadingImage(true);
-
-      // המרת החתימה ל-Blob
-      const canvas = signatureRef.current.getCanvas();
+      // 2. המרת החתימה לתמונה
+      const canvas = sigCanvasRef.current.getCanvas();
       const blob = await new Promise((resolve) => {
         canvas.toBlob(resolve, "image/png");
       });
 
-      const fileName = `${selectedMember?.memberID || "unknown"}.png`;
+      // 3. העלאת החתימה
+      const fileName = `${formData.idNumber}.png`;
+      await uploadSignatureImage(blob, fileName);
 
-      const result = await uploadSignatureImage(blob, fileName);
-      setUploadedImagePath(result.filePath);
-      alert(`התמונה הועלתה בהצלחה!\nנתיב: ${result.filePath}`);
+      // Flowchart: "Click send -> Success Component"
+      setShowModal(false);
+      setStep("success");
     } catch (err) {
-      alert("שגיאה בהעלאת התמונה: " + err.message);
+      alert("שגיאה בשמירת החוזה: " + err.message);
     } finally {
-      setIsUploadingImage(false);
+      FLoading(false);
     }
   };
 
-  const handleGenerateContract = () => {
-    if (!selectedMember) {
-      alert("נא לבחור חבר מועדון");
-      return;
-    }
+  // --- Render Functions ---
 
-    if (!signatureRef.current?.isEmpty()) {
-      const signatureData = signatureRef.current.toDataURL();
-
-      const contract = {
-        member: {
-          id: selectedMember._id,
-          memberName: selectedMember.memberName,
-          memberID: selectedMember.memberID,
-        },
-        contract: {
-          startDate: formData.startDate,
-          endDate: formData.endDate,
-          monthlyFee: parseFloat(formData.monthlyFee),
-          paymentMethod: formData.paymentMethod,
-          notes: formData.notes,
-          signature: signatureData,
-          uploadedSignaturePath: uploadedImagePath,
-          generatedAt: new Date().toISOString(),
-        },
-      };
-
-      setContractData(contract);
-    } else {
-      alert("נא לחתום על החוזה");
-    }
-  };
-
-  const handleCopyJson = () => {
-    if (contractData) {
-      navigator.clipboard.writeText(JSON.stringify(contractData, null, 2));
-      alert("JSON הועתק ללוח");
-    }
-  };
-
-  const handleDownloadJson = () => {
-    if (contractData) {
-      const blob = new Blob([JSON.stringify(contractData, null, 2)], {
-        type: "application/json",
-      });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `contract-${selectedMember?.memberName?.replace(
-        /\s+/g,
-        "-"
-      )}-${Date.now()}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-    }
-  };
-
-  const handleDownloadSignature = () => {
-    if (contractData?.contract?.signature) {
-      const a = document.createElement("a");
-      a.href = contractData.contract.signature;
-      a.download = `signature-${selectedMember?.memberName?.replace(
-        /\s+/g,
-        "-"
-      )}-${Date.now()}.png`;
-      a.click();
-    }
-  };
-
-  if (loading) {
-    return <div className={styles.container}>טוען נתונים...</div>;
+  // מסך הצלחה
+  if (step === "success") {
+    return (
+      <div className={styles.container}>
+        <div className={styles.card}>
+          <div className={styles.successIcon}>✓</div>
+          <h2 className={styles.title}>הטופס נשלח בהצלחה!</h2>
+          <p>תודה רבה, {formData.fullName}.</p>
+          <button
+            className={styles.buttonPrimary}
+            onClick={() => window.location.reload()}
+            style={{ marginTop: "20px" }}
+          >
+            סיום וחזרה להתחלה
+          </button>
+        </div>
+      </div>
+    );
   }
 
+  // מסך "כבר חתום"
+  if (step === "already_signed") {
+    return (
+      <div className={styles.container}>
+        <div className={styles.card}>
+          <div className={styles.warningIcon}>!</div>
+          <h2 className={styles.title}>משתמש זה כבר חתום במערכת</h2>
+          <p>מספר זהות {formData.idNumber} מופיע במאגר כמי שביצע חתימה.</p>
+          <button
+            className={styles.buttonSecondary}
+            onClick={() => {
+              setStep("form");
+              setFormData({ fullName: "", idNumber: "" });
+              setIsSignButtonAble(false);
+            }}
+          >
+            חזרה
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // המסך הראשי (Form)
   return (
     <div className={styles.container}>
-      <h1 className={styles.title}>יצירת חוזה חבר מועדון</h1>
+      <div className={styles.paper}>
+        {/* לוגו וכותרת */}
+        <div className={styles.header}>
+          {/* ניתן להוסיף כאן תמונה עם <img src={shekelLogo} ... /> */}
+          <div className={styles.logoText}>
+            שק"ל - שילוב קהילתי לאנשים עם מוגבלויות
+          </div>
+          <h1 className={styles.mainTitle}>
+            הנחיות לשימוש במנוי חדר הכושר - שק"ל - מועדון חברתי
+          </h1>
+        </div>
 
-      {!contractData ? (
-        <div className={styles.formSection}>
-          {/* Member Selection */}
-          <div className={styles.section}>
-            <h2>בחירת חבר מועדון</h2>
+        {/* תוכן המסמך */}
+        <div className={styles.content}>
+          <ol className={styles.rulesList}>
+            <li>
+              מקבל השירות מודע לכך שהמנוי ניתן לתקופה של שלושה חודשים, ומתחדש כל
+              פעם בשלושה חודשים.
+            </li>
+            <li>
+              "מקבל השירות מבין כי התנאי להפעלת המנוי הוא הגעתו הפיזית ל-3
+              ביקורים בחודש לפחות (סה"כ 9 הגעות לאימון או לשיעור במהלך תקופה של
+              3 חודשים)."
+            </li>
+            <li>
+              מקבל השירות מבין ומצהיר כי רק שק"ל היא הגורם המתווך והמסבסד וכל מה
+              שקורה בחדר הכושר הוא באחריות חדר הכושר בלבד ולא של שק"ל.
+            </li>
+            <li>
+              מקבל השירות מבין שאם לא יעמוד בתנאי המנוי, המנוי יועבר למקבל שירות
+              אחר ולא תוכל להיות לו טענה בנושא.
+            </li>
+            <li>
+              מקבל השירות מצהיר כי הוא מודע ומסכים לכך שחדר הכושר ידווח על
+              נוכחותו.
+            </li>
+            <li>המנוי כולל כניסה לחדר הכושר והסטודיו בתיאום מראש.</li>
+            <li>
+              לשק"ל יש את הזכות להפסיק את המנוי בהתאם לשיקול דעתה ולמקבל השירות
+              לא יהיה טענה בנושא.
+            </li>
+          </ol>
 
-            <button
-              onClick={() => setShowAddMemberForm(!showAddMemberForm)}
-              className={styles.button}
-              style={{ marginBottom: "15px" }}
-            >
-              {showAddMemberForm ? "ביטול" : "+ הוסף חבר מועדון חדש"}
-            </button>
+          <h3 className={styles.subTitle}>
+            חדר הכושר פרופיט – כללים והנחיות לשימוש:
+          </h3>
+          <ol className={styles.rulesList}>
+            <li>בפעם הראשונה יש להגיע עם תעודה מזהה.</li>
+            <li>
+              הכניסה והשימוש במתקני חדר הכושר מותנים בהשלמת הליך הרישום בקבלה,
+              הכולל חתימה על תקנון והצהרת בריאות כחוק.
+            </li>
+            <li>
+              חובה תמיד להגיע עם בגדי ספורט ונעלי ספורט, אחרת לא יתאפשר אימון.
+            </li>
+            <li>חובה להתאמן עם מגבת בכל אימון, ללא מגבת לא יתאפשר אימון.</li>
+            <li>יש להחזיר את המשקולות או הציוד בסיום התרגיל למקום.</li>
+          </ol>
 
-            {showAddMemberForm && (
-              <div className={styles.addMemberForm}>
-                <h3>הוספת חבר מועדון חדש</h3>
-                <div className={styles.formGroup}>
-                  <label>שם מלא:</label>
-                  <input
-                    type="text"
-                    name="memberName"
-                    value={newMemberData.memberName}
-                    onChange={handleNewMemberChange}
-                    className={styles.input}
-                    placeholder="הזן שם מלא"
-                  />
-                </div>
-                <div className={styles.formGroup}>
-                  <label>תעודת זהות:</label>
-                  <input
-                    type="text"
-                    name="memberID"
-                    value={newMemberData.memberID}
-                    onChange={handleNewMemberChange}
-                    className={styles.input}
-                    placeholder="הזן מספר ת.ז"
-                  />
-                </div>
-                <button
-                  onClick={handleAddNewMember}
-                  className={styles.generateButton}
-                  disabled={loading}
-                >
-                  {loading ? "מוסיף..." : "הוסף חבר מועדון"}
-                </button>
-              </div>
-            )}
+          <p className={styles.footerNote}>
+            פתיחת כרטיס מנוי תתאפשר רק למי שקיבל אישור לפי שם ות.ז מהעמותה.
+          </p>
+        </div>
 
-            <select
-              className={styles.select}
-              onChange={(e) => {
-                const member = members.find((m) => m._id === e.target.value);
-                handleMemberSelect(member);
-              }}
-              value={selectedMember?._id || ""}
-            >
-              <option value="">בחר חבר מועדון</option>
-              {members?.map((member) => (
-                <option key={member._id} value={member._id}>
-                  {member.memberName} - ת.ז: {member.memberID}
-                </option>
-              ))}
-            </select>
-
-            {selectedMember && (
-              <div className={styles.memberInfo}>
-                <h3>פרטי החבר</h3>
-                {!showEditMemberForm ? (
-                  <>
-                    <p>
-                      <strong>שם:</strong> {selectedMember.memberName}
-                    </p>
-                    <p>
-                      <strong>ת.ז:</strong> {selectedMember.memberID}
-                    </p>
-                    <div
-                      style={{
-                        display: "flex",
-                        gap: "10px",
-                        marginTop: "10px",
-                      }}
-                    >
-                      <button
-                        onClick={handleStartEdit}
-                        className={styles.button}
-                        disabled={loading}
-                      >
-                        ערוך שם
-                      </button>
-                      <button
-                        onClick={() =>
-                          handleDeleteMember(selectedMember.memberID)
-                        }
-                        className={styles.clearButton}
-                        style={{ backgroundColor: "#dc3545" }}
-                        disabled={loading}
-                      >
-                        מחק חבר מועדון
-                      </button>
-                    </div>
-                  </>
-                ) : (
-                  <div>
-                    <div className={styles.formGroup}>
-                      <label>שם חדש:</label>
-                      <input
-                        type="text"
-                        value={editMemberData.memberName}
-                        onChange={handleEditMemberChange}
-                        className={styles.input}
-                        placeholder="הזן שם חדש"
-                      />
-                    </div>
-                    <div style={{ display: "flex", gap: "10px" }}>
-                      <button
-                        onClick={handleUpdateMember}
-                        className={styles.generateButton}
-                        disabled={loading}
-                      >
-                        {loading ? "מעדכן..." : "שמור שינויים"}
-                      </button>
-                      <button
-                        onClick={() => {
-                          setShowEditMemberForm(false);
-                          setEditMemberData({ memberName: "" });
-                        }}
-                        className={styles.clearButton}
-                        disabled={loading}
-                      >
-                        ביטול
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
+        {/* אזור קלט וכפתור חתימה */}
+        <div className={styles.formArea}>
+          <div className={styles.inputGroup}>
+            <label>שם מלא:</label>
+            <input
+              type="text"
+              name="fullName"
+              value={formData.fullName}
+              onChange={handleInputChange}
+              placeholder="הכנס שם מלא"
+            />
+          </div>
+          <div className={styles.inputGroup}>
+            <label>תעודת זהות:</label>
+            <input
+              type="text" // שיניתי ל-text כדי לאפשר אפס מוביל במידת הצורך
+              name="idNumber"
+              value={formData.idNumber}
+              onChange={handleInputChange}
+              placeholder="הכנס מספר ת.ז"
+              maxLength={9}
+            />
           </div>
 
-          {/* Contract Details */}
-          <div className={styles.section}>
-            <h2>פרטי החוזה</h2>
-            <div className={styles.formGroup}>
-              <label>תאריך התחלה:</label>
-              <input
-                type="date"
-                name="startDate"
-                value={formData.startDate}
-                onChange={handleInputChange}
-                className={styles.input}
-              />
-            </div>
+          {errorMsg && <div className={styles.error}>{errorMsg}</div>}
 
-            <div className={styles.formGroup}>
-              <label>תאריך סיום:</label>
-              <input
-                type="date"
-                name="endDate"
-                value={formData.endDate}
-                onChange={handleInputChange}
-                className={styles.input}
-              />
-            </div>
+          <button
+            className={`${styles.buttonPrimary} ${
+              !isSignButtonAble ? styles.disabled : ""
+            }`}
+            onClick={handleSignClick}
+            disabled={!isSignButtonAble || loading}
+          >
+            {loading ? "בודק..." : "חתום על הנחיות"}
+          </button>
+        </div>
+      </div>
 
-            <div className={styles.formGroup}>
-              <label>תשלום חודשי (₪):</label>
-              <input
-                type="number"
-                name="monthlyFee"
-                value={formData.monthlyFee}
-                onChange={handleInputChange}
-                className={styles.input}
-                placeholder="הזן סכום"
-              />
-            </div>
+      {/* Modal / Popup לחתימה */}
+      {showModal && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <h3>חתימה דיגיטלית</h3>
+            <p>אנא חתום בתיבה למטה:</p>
 
-            <div className={styles.formGroup}>
-              <label>אמצעי תשלום:</label>
-              <select
-                name="paymentMethod"
-                value={formData.paymentMethod}
-                onChange={handleInputChange}
-                className={styles.select}
-              >
-                <option value="cash">מזומן</option>
-                <option value="credit">כרטיס אשראי</option>
-                <option value="bank_transfer">העברה בנקאית</option>
-                <option value="check">צ'ק</option>
-              </select>
-            </div>
-
-            <div className={styles.formGroup}>
-              <label>הערות:</label>
-              <textarea
-                name="notes"
-                value={formData.notes}
-                onChange={handleInputChange}
-                className={styles.textarea}
-                rows="4"
-                placeholder="הערות נוספות..."
-              />
-            </div>
-          </div>
-
-          {/* Signature Section */}
-          <div className={styles.section}>
-            <h2>חתימה</h2>
-
-            {existingSignature && (
-              <div
-                style={{
-                  marginBottom: "15px",
-                  border: "2px solid #4CAF50",
-                  padding: "10px",
-                  borderRadius: "5px",
-                }}
-              >
-                <h3 style={{ color: "#4CAF50", marginTop: 0 }}>
-                  חתימה קיימת במערכת:
-                </h3>
-                <img
-                  src={existingSignature}
-                  alt="חתימה קיימת"
-                  style={{
-                    maxWidth: "100%",
-                    border: "1px solid #ddd",
-                    borderRadius: "5px",
-                  }}
-                />
-              </div>
-            )}
-
-            <div className={styles.signatureContainer}>
+            <div className={styles.signatureWrapper}>
               <SignatureCanvas
-                ref={signatureRef}
-                canvasProps={{
-                  className: styles.signatureCanvas,
-                }}
+                ref={sigCanvasRef}
+                penColor="black"
+                canvasProps={{ className: styles.sigCanvas }}
+                onBegin={handleCanvasBegin}
               />
             </div>
-            <div
-              style={{
-                display: "flex",
-                gap: "10px",
-                marginTop: "10px",
-                flexWrap: "wrap",
-              }}
-            >
+
+            <div className={styles.modalButtons}>
               <button
-                onClick={handleCheckExistingSignature}
-                className={styles.button}
-                disabled={isCheckingSignature || loading || !selectedMember}
-                style={{ backgroundColor: "#2196F3" }}
-              >
-                {isCheckingSignature ? "בודק..." : "בדוק חתימה קיימת"}
-              </button>
-              <button
+                className={styles.buttonClear}
                 onClick={handleClearSignature}
-                className={styles.clearButton}
               >
                 נקה חתימה
               </button>
               <button
-                onClick={handleUploadSignature}
-                className={styles.button}
-                disabled={isUploadingImage || loading || !selectedMember}
+                className={`${styles.buttonPrimary} ${
+                  !isSendButtonAble ? styles.disabled : ""
+                }`}
+                onClick={handleSendForm}
+                disabled={!isSendButtonAble || loading}
               >
-                {isUploadingImage ? "מעלה..." : "העלה חתימה לשרת"}
+                {loading ? "שולח..." : "שלח טופס"}
               </button>
             </div>
-            {uploadedImagePath && (
-              <p style={{ marginTop: "10px", color: "green" }}>
-                ✓ התמונה הועלתה: {uploadedImagePath}
-              </p>
-            )}
-          </div>
-
-          <button
-            onClick={handleGenerateContract}
-            className={styles.generateButton}
-            disabled={!selectedMember}
-          >
-            צור חוזה
-          </button>
-        </div>
-      ) : (
-        <div className={styles.jsonSection}>
-          <h2>החוזה נוצר בהצלחה</h2>
-
-          <div className={styles.buttonGroup}>
-            <button onClick={handleCopyJson} className={styles.button}>
-              העתק JSON
-            </button>
-            <button onClick={handleDownloadJson} className={styles.button}>
-              הורד JSON
-            </button>
-            <button onClick={handleDownloadSignature} className={styles.button}>
-              הורד תמונת חתימה
-            </button>
             <button
-              onClick={() => {
-                setContractData(null);
-                setSelectedMember(null);
-                setFormData({
-                  startDate: new Date().toISOString().split("T")[0],
-                  endDate: "",
-                  monthlyFee: "",
-                  paymentMethod: "cash",
-                  notes: "",
-                });
-                signatureRef.current?.clear();
-              }}
-              className={styles.button}
+              className={styles.closeModal}
+              onClick={() => setShowModal(false)}
             >
-              צור חוזה חדש
+              ביטול
             </button>
-          </div>
-
-          <div className={styles.jsonDisplay}>
-            <pre>{JSON.stringify(contractData, null, 2)}</pre>
           </div>
         </div>
       )}
