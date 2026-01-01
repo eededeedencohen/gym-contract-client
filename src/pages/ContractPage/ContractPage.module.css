@@ -1,164 +1,233 @@
 /* src/pages/ContractPage/ContractPage.module.css */
 
-.page {
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    min-height: 100vh;
-    background-color: #f4f7f6;
+.container {
     padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
     direction: rtl;
-    /* תמיכה בעברית */
+    font-family: Arial, sans-serif;
 }
 
-.contractCard {
-    background: #ffffff;
-    width: 100%;
-    max-width: 700px;
-    padding: 30px;
-    border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-}
-
-.contractCard h2 {
-    color: #2d3436;
+.title {
     text-align: center;
-    margin-bottom: 20px;
-    border-bottom: 2px solid #00cec9;
+    color: #2c3e50;
+    margin-bottom: 30px;
+    font-size: 2rem;
+}
+
+.formSection {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.section {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.section h2 {
+    color: #34495e;
+    margin-bottom: 15px;
+    font-size: 1.5rem;
+    border-bottom: 2px solid #3498db;
     padding-bottom: 10px;
 }
 
-.scrollText {
-    height: 250px;
-    overflow-y: auto;
-    border: 1px solid #dfe6e9;
-    padding: 15px;
-    background: #fafafa;
-    border-radius: 8px;
-    font-size: 0.95rem;
-    line-height: 1.6;
-    margin-bottom: 25px;
-    color: #636e72;
+.section h3 {
+    color: #2c3e50;
+    margin-top: 15px;
+    margin-bottom: 10px;
 }
 
-.inputs {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    margin-bottom: 25px;
-}
-
-.inputs input {
-    padding: 12px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
+.select {
+    width: 100%;
+    padding: 10px;
     font-size: 1rem;
-    outline: none;
-    transition: border-color 0.3s;
-}
-
-.inputs input:focus {
-    border-color: #00cec9;
-}
-
-.signBtn {
-    width: 100%;
-    padding: 14px;
-    background-color: #0984e3;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 1.1rem;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background 0.3s;
-}
-
-.signBtn:hover {
-    background-color: #74b9ff;
-}
-
-/* --- Modal Styles --- */
-
-.modalOverlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.7);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-    padding: 15px;
-}
-
-.modalContent {
+    border: 1px solid #ddd;
+    border-radius: 4px;
     background: white;
+    cursor: pointer;
+}
+
+.select:focus {
+    outline: none;
+    border-color: #3498db;
+}
+
+.memberInfo {
+    margin-top: 20px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 4px;
+    border-right: 4px solid #3498db;
+}
+
+.memberInfo p {
+    margin: 8px 0;
+    color: #555;
+}
+
+.formGroup {
+    margin-bottom: 15px;
+}
+
+.formGroup label {
+    display: block;
+    margin-bottom: 5px;
+    color: #555;
+    font-weight: bold;
+}
+
+.input {
     width: 100%;
-    max-width: 500px;
-    border-radius: 15px;
-    padding: 20px;
-    text-align: center;
+    padding: 10px;
+    font-size: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
 }
 
-.canvasContainer {
-    border: 2px dashed #b2bec3;
-    margin: 20px 0;
-    background: #fff;
-    border-radius: 10px;
-    touch-action: none;
-    /* קריטי למובייל כדי למנוע גלילה בזמן חתימה */
+.input:focus {
+    outline: none;
+    border-color: #3498db;
 }
 
-.sigPad {
+.textarea {
+    width: 100%;
+    padding: 10px;
+    font-size: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    resize: vertical;
+    font-family: Arial, sans-serif;
+}
+
+.textarea:focus {
+    outline: none;
+    border-color: #3498db;
+}
+
+.signatureContainer {
+    border: 2px solid #ddd;
+    border-radius: 4px;
+    overflow: hidden;
+    background: white;
+}
+
+.signatureCanvas {
     width: 100%;
     height: 200px;
+    cursor: crosshair;
 }
 
-.modalActions {
-    display: flex;
-    justify-content: space-between;
-    gap: 10px;
-}
-
-.modalActions button {
-    flex: 1;
-    padding: 10px;
-    border-radius: 6px;
+.clearButton {
+    margin-top: 10px;
+    padding: 8px 16px;
+    background: #e74c3c;
+    color: white;
     border: none;
+    border-radius: 4px;
     cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.clearButton:hover {
+    background: #c0392b;
+}
+
+.generateButton {
+    width: 100%;
+    padding: 15px;
+    background: #27ae60;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 1.2rem;
     font-weight: bold;
+    cursor: pointer;
+    margin-top: 20px;
 }
 
-.modalActions button:nth-child(1) {
-    background: #fab1a0;
+.generateButton:hover {
+    background: #229954;
 }
 
-/* נקה */
-.modalActions button:nth-child(2) {
-    background: #55efc4;
+.generateButton:disabled {
+    background: #95a5a6;
+    cursor: not-allowed;
 }
 
-/* אשר */
-.modalActions button:nth-child(3) {
-    background: #dfe6e9;
+.jsonSection {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-/* ביטול */
+.jsonSection h2 {
+    color: #27ae60;
+    text-align: center;
+    margin-bottom: 20px;
+}
 
-/* התאמות למובייל */
-@media (max-width: 600px) {
-    .page {
+.buttonGroup {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.button {
+    flex: 1;
+    min-width: 150px;
+    padding: 10px 20px;
+    background: #3498db;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+.button:hover {
+    background: #2980b9;
+}
+
+.jsonDisplay {
+    background: #2c3e50;
+    color: #ecf0f1;
+    padding: 20px;
+    border-radius: 4px;
+    overflow-x: auto;
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.jsonDisplay pre {
+    margin: 0;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+@media (max-width: 768px) {
+    .container {
         padding: 10px;
     }
 
-    .contractCard {
-        padding: 15px;
+    .title {
+        font-size: 1.5rem;
     }
 
-    .modalContent {
-        width: 95%;
+    .buttonGroup {
+        flex-direction: column;
+    }
+
+    .button {
+        width: 100%;
     }
 }

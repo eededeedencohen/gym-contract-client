@@ -1,9 +1,8 @@
-// src/hooks/useGymMembers.jsx
-import { useGymMembersContext } from "../context/GymMemberContext";
+import { useGymMembers as useGymMemberContext } from "../context/GymMemberContext";
 
 const useGymMembers = () => {
-  const { signContract, loading, error } = useGymMembersContext();
-  return { signContract, loading, error };
+  const { loading, error, members, addMember, editMember, removeMember } =
+    useGymMemberContext();
+  return { loading, error, members, addMember, editMember, removeMember };
 };
-
 export default useGymMembers;
