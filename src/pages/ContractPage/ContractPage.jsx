@@ -2,6 +2,10 @@
 import React, { useRef, useState } from "react";
 import SignatureCanvas from "react-signature-canvas";
 import useGymMembers from "../../hooks/useGymMembers";
+import {
+  uploadSignatureImage,
+  checkSignatureExists,
+} from "../../services/gymMemberService";
 import styles from "./ContractPage.module.css";
 
 const ContractPage = () => {
@@ -12,6 +16,10 @@ const ContractPage = () => {
   const [showAddMemberForm, setShowAddMemberForm] = useState(false);
   const [showEditMemberForm, setShowEditMemberForm] = useState(false);
   const [editMemberData, setEditMemberData] = useState({ memberName: "" });
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [uploadedImagePath, setUploadedImagePath] = useState(null);
+  const [existingSignature, setExistingSignature] = useState(null);
+  const [isCheckingSignature, setIsCheckingSignature] = useState(false);
   const signatureRef = useRef(null);
 
   const [formData, setFormData] = useState({
@@ -113,6 +121,59 @@ const ContractPage = () => {
 
   const handleClearSignature = () => {
     signatureRef.current?.clear();
+    setUploadedImagePath(null);
+    setExistingSignature(null);
+  };
+
+  const handleCheckExistingSignature = async () => {
+    if (!selectedMember) {
+      alert("נא לבחור חבר מועדון קודם");
+      return;
+    }
+
+    try {
+      setIsCheckingSignature(true);
+      const result = await checkSignatureExists(selectedMember.memberID);
+
+      if (result.exists) {
+        setExistingSignature(result.imageUrl);
+        alert("נמצאה חתימה קיימת!");
+      } else {
+        setExistingSignature(null);
+        alert("לא נמצאה חתימה קיימת לחבר מועדון זה");
+      }
+    } catch (err) {
+      alert("שגיאה בבדיקת חתימה: " + err.message);
+    } finally {
+      setIsCheckingSignature(false);
+    }
+  };
+
+  const handleUploadSignature = async () => {
+    if (signatureRef.current?.isEmpty()) {
+      alert("נא לחתום על החוזה קודם");
+      return;
+    }
+
+    try {
+      setIsUploadingImage(true);
+
+      // המרת החתימה ל-Blob
+      const canvas = signatureRef.current.getCanvas();
+      const blob = await new Promise((resolve) => {
+        canvas.toBlob(resolve, "image/png");
+      });
+
+      const fileName = `${selectedMember?.memberID || "unknown"}.png`;
+
+      const result = await uploadSignatureImage(blob, fileName);
+      setUploadedImagePath(result.filePath);
+      alert(`התמונה הועלתה בהצלחה!\nנתיב: ${result.filePath}`);
+    } catch (err) {
+      alert("שגיאה בהעלאת התמונה: " + err.message);
+    } finally {
+      setIsUploadingImage(false);
+    }
   };
 
   const handleGenerateContract = () => {
@@ -137,6 +198,7 @@ const ContractPage = () => {
           paymentMethod: formData.paymentMethod,
           notes: formData.notes,
           signature: signatureData,
+          uploadedSignaturePath: uploadedImagePath,
           generatedAt: new Date().toISOString(),
         },
       };
@@ -398,6 +460,31 @@ const ContractPage = () => {
           {/* Signature Section */}
           <div className={styles.section}>
             <h2>חתימה</h2>
+
+            {existingSignature && (
+              <div
+                style={{
+                  marginBottom: "15px",
+                  border: "2px solid #4CAF50",
+                  padding: "10px",
+                  borderRadius: "5px",
+                }}
+              >
+                <h3 style={{ color: "#4CAF50", marginTop: 0 }}>
+                  חתימה קיימת במערכת:
+                </h3>
+                <img
+                  src={existingSignature}
+                  alt="חתימה קיימת"
+                  style={{
+                    maxWidth: "100%",
+                    border: "1px solid #ddd",
+                    borderRadius: "5px",
+                  }}
+                />
+              </div>
+            )}
+
             <div className={styles.signatureContainer}>
               <SignatureCanvas
                 ref={signatureRef}
@@ -406,12 +493,41 @@ const ContractPage = () => {
                 }}
               />
             </div>
-            <button
-              onClick={handleClearSignature}
-              className={styles.clearButton}
+            <div
+              style={{
+                display: "flex",
+                gap: "10px",
+                marginTop: "10px",
+                flexWrap: "wrap",
+              }}
             >
-              נקה חתימה
-            </button>
+              <button
+                onClick={handleCheckExistingSignature}
+                className={styles.button}
+                disabled={isCheckingSignature || loading || !selectedMember}
+                style={{ backgroundColor: "#2196F3" }}
+              >
+                {isCheckingSignature ? "בודק..." : "בדוק חתימה קיימת"}
+              </button>
+              <button
+                onClick={handleClearSignature}
+                className={styles.clearButton}
+              >
+                נקה חתימה
+              </button>
+              <button
+                onClick={handleUploadSignature}
+                className={styles.button}
+                disabled={isUploadingImage || loading || !selectedMember}
+              >
+                {isUploadingImage ? "מעלה..." : "העלה חתימה לשרת"}
+              </button>
+            </div>
+            {uploadedImagePath && (
+              <p style={{ marginTop: "10px", color: "green" }}>
+                ✓ התמונה הועלתה: {uploadedImagePath}
+              </p>
+            )}
           </div>
 
           <button
