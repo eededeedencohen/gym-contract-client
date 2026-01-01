@@ -1,228 +1,466 @@
+/* ייבוא פונט Rubik נקי ומודרני */
+@import url('https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;700;800&display=swap');
+
+:root {
+    /* פלטת צבעים */
+    --primary-color: #8E44AD;
+    /* סגול מותג */
+    --primary-dark: #732d91;
+    --accent-color: #FFA500;
+    /* כתום לפעולות */
+    --accent-hover: #ff8c00;
+
+    --text-dark: #2c3e50;
+    --text-medium: #555;
+    --text-light: #7f8c8d;
+
+    --bg-color: #f4f6f9;
+    --white: #ffffff;
+
+    /* אפקטים */
+    --shadow-sm: 0 4px 6px rgba(0, 0, 0, 0.02);
+    --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.08);
+    --radius: 16px;
+    --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
 .container {
     min-height: 100vh;
-    background-color: #f0f2f5;
-    padding: 20px;
+    background-color: var(--bg-color);
+    /* טקסטורת נקודות עדינה ברקע */
+    background-image: radial-gradient(#d1d1d1 1px, transparent 1px);
+    background-size: 24px 24px;
+    padding: 40px 20px;
     display: flex;
     justify-content: center;
     align-items: flex-start;
     direction: rtl;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Rubik', sans-serif;
 }
 
+/* --- הכרטיס הראשי (Paper) --- */
 .paper {
-    background: white;
+    background: var(--white);
     width: 100%;
     max-width: 800px;
-    padding: 40px;
-    border-radius: 8px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    padding: 70px 60px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    position: relative;
+    border: 1px solid rgba(255, 255, 255, 0.5);
 }
 
+/* --- Header --- */
 .header {
-    text-align: center;
-    margin-bottom: 30px;
-    border-bottom: 2px solid #eee;
-    padding-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 50px;
+    border-bottom: 2px solid #f1f2f6;
+    padding-bottom: 40px;
 }
 
-.logoText {
-    color: #8E44AD;
-    /* צבע סגול המזכיר את הלוגו */
-    font-size: 1.2rem;
-    font-weight: bold;
-    margin-bottom: 10px;
+.logoImage {
+    max-width: 200px;
+    width: 100%;
+    height: auto;
+    margin-bottom: 30px;
+    /* צללית סגולה עדינה שנותנת עומק ללוגו */
+    filter: drop-shadow(0 10px 15px rgba(142, 68, 173, 0.15));
+    animation: fadeDown 0.8s ease-out;
 }
 
 .mainTitle {
-    color: #333;
-    font-size: 1.8rem;
+    color: var(--text-dark);
+    font-size: 2.2rem;
     margin: 0;
-    text-decoration: underline;
+    font-weight: 800;
+    line-height: 1.2;
+    text-align: center;
+    letter-spacing: -0.5px;
 }
 
+/* --- תוכן (חוקים) --- */
 .content {
     font-size: 1.1rem;
-    line-height: 1.6;
-    color: #2c3e50;
-    margin-bottom: 40px;
+    line-height: 1.8;
+    color: var(--text-dark);
+    margin-bottom: 50px;
 }
 
 .subTitle {
-    margin-top: 25px;
-    margin-bottom: 15px;
-    font-weight: bold;
-    font-size: 1.3rem;
+    margin-top: 40px;
+    margin-bottom: 20px;
+    font-weight: 700;
+    font-size: 1.4rem;
+    color: var(--primary-color);
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
+.subTitle::before {
+    content: '';
+    display: block;
+    width: 6px;
+    height: 28px;
+    background: var(--accent-color);
+    border-radius: 4px;
+}
+
+/* רשימה ממוספרת מעוצבת */
 .rulesList {
-    padding-right: 20px;
+    padding-right: 0;
     margin-bottom: 20px;
+    list-style-type: none;
+    counter-reset: list-counter;
 }
 
 .rulesList li {
-    margin-bottom: 10px;
+    position: relative;
+    margin-bottom: 18px;
+    padding-right: 45px;
+}
+
+.rulesList li::before {
+    counter-increment: list-counter;
+    content: counter(list-counter);
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 28px;
+    height: 28px;
+    background-color: #f3eff6;
+    /* רקע סגול בהיר מאוד */
+    color: var(--primary-color);
+    font-weight: 700;
+    font-size: 0.95rem;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: inset 0 0 0 1px rgba(142, 68, 173, 0.1);
 }
 
 .footerNote {
-    margin-top: 30px;
-    font-weight: bold;
+    margin-top: 40px;
+    padding: 20px;
+    background-color: #FFF8E1;
+    /* צהוב עדין */
+    border-right: 5px solid var(--accent-color);
+    font-weight: 500;
+    color: #795548;
+    border-radius: 8px;
     text-align: center;
 }
 
-/* אזור הטופס בתחתית הדף */
+/* --- אזור הטופס --- */
 .formArea {
-    background-color: #f9f9f9;
-    padding: 20px;
-    border-radius: 8px;
-    border: 1px solid #e0e0e0;
+    background-color: #fafbfc;
+    padding: 40px;
+    border-radius: var(--radius);
+    border: 1px solid #edf2f7;
+    margin-top: 40px;
+}
+
+.formArea h3 {
+    margin-top: 0;
+    margin-bottom: 25px;
+    color: var(--text-dark);
+    font-size: 1.3rem;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 15px;
 }
 
 .inputGroup {
-    margin-bottom: 15px;
+    margin-bottom: 25px;
 }
 
 .inputGroup label {
     display: block;
-    margin-bottom: 5px;
-    font-weight: bold;
+    margin-bottom: 10px;
+    font-weight: 600;
+    color: var(--text-medium);
+    font-size: 0.95rem;
 }
 
 .inputGroup input {
     width: 100%;
-    padding: 12px;
-    font-size: 1rem;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    box-sizing: border-box;
+    padding: 16px;
+    font-size: 1.05rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    background-color: var(--white);
+    transition: var(--transition);
+    font-family: 'Rubik', sans-serif;
+    color: var(--text-dark);
 }
 
 .inputGroup input:focus {
-    border-color: #4CAF50;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 4px rgba(142, 68, 173, 0.1);
     outline: none;
 }
 
-/* כפתורים */
-.buttonPrimary {
-    width: 100%;
-    padding: 15px;
-    background-color: #FFA500;
-    /* כתום כמו בתרשים */
-    color: white;
-    font-size: 1.2rem;
-    font-weight: bold;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background 0.3s;
+.inputGroup input::placeholder {
+    color: #bdc3c7;
 }
 
-.buttonPrimary:hover {
-    background-color: #e69500;
+/* --- כפתורים --- */
+.buttonPrimary {
+    width: 100%;
+    padding: 18px;
+    background: linear-gradient(135deg, var(--accent-color), var(--accent-hover));
+    color: white;
+    font-size: 1.2rem;
+    font-weight: 700;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: var(--transition);
+    box-shadow: 0 10px 20px rgba(255, 165, 0, 0.25);
+    margin-top: 10px;
+}
+
+.buttonPrimary:hover:not(:disabled) {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 25px rgba(255, 165, 0, 0.35);
 }
 
 .buttonPrimary.disabled {
-    background-color: #FFDAB9;
-    /* כתום בהיר */
+    background: #cbd5e0;
+    box-shadow: none;
     cursor: not-allowed;
-    opacity: 0.7;
+    opacity: 0.8;
+    transform: none;
 }
 
 .buttonSecondary {
-    padding: 10px 20px;
-    background-color: #3498db;
-    color: white;
-    border: none;
-    border-radius: 4px;
+    padding: 12px 30px;
+    background: transparent;
+    color: var(--text-dark);
+    border: 2px solid #e2e8f0;
+    border-radius: 50px;
+    font-weight: 600;
     cursor: pointer;
-    font-size: 1rem;
+    transition: 0.3s;
+}
+
+.buttonSecondary:hover {
+    background-color: #f7fafc;
+    border-color: #cbd5e0;
 }
 
 .buttonClear {
-    padding: 10px 20px;
-    background-color: #e74c3c;
-    color: white;
-    border: none;
-    border-radius: 4px;
+    padding: 12px 30px;
+    background-color: #fff;
+    color: #e74c3c;
+    border: 1px solid #ffdcdc;
+    border-radius: 50px;
     cursor: pointer;
+    font-weight: 600;
+    transition: 0.3s;
 }
 
-/* Modal Styling */
+.buttonClear:hover {
+    background-color: #fff5f5;
+    border-color: #e74c3c;
+}
+
+/* --- Modal --- */
 .modalOverlay {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(30, 30, 40, 0.6);
+    backdrop-filter: blur(8px);
+    /* טשטוש יוקרתי לרקע */
     display: flex;
     justify-content: center;
     align-items: center;
     z-index: 1000;
+    animation: fadeIn 0.4s ease;
 }
 
 .modalContent {
     background: white;
-    padding: 30px;
-    border-radius: 8px;
+    padding: 40px;
+    border-radius: 20px;
     width: 90%;
     max-width: 500px;
     text-align: center;
-    position: relative;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.modalContent h3 {
+    margin-top: 0;
+    color: var(--primary-color);
+    font-size: 1.6rem;
 }
 
 .signatureWrapper {
-    border: 2px dashed #ccc;
-    margin: 20px 0;
-    height: 200px;
+    border: 2px dashed #cbd5e0;
+    border-radius: 12px;
+    margin: 25px 0;
+    height: 220px;
+    background: #fdfdfd;
+    position: relative;
+    overflow: hidden;
+    transition: var(--transition);
+}
+
+.signatureWrapper:hover {
+    border-color: var(--primary-color);
     background: #fff;
 }
 
 .sigCanvas {
     width: 100%;
     height: 100%;
+    cursor: crosshair;
 }
 
 .modalButtons {
     display: flex;
-    gap: 10px;
-    justify-content: space-between;
-    margin-top: 20px;
+    gap: 15px;
+    justify-content: center;
+    align-items: center;
+    margin-top: 30px;
 }
 
 .closeModal {
     background: none;
     border: none;
-    color: #777;
-    margin-top: 15px;
+    color: var(--text-light);
+    margin-top: 20px;
     cursor: pointer;
+    font-size: 0.9rem;
     text-decoration: underline;
 }
 
-/* מסכי סטטוס (הצלחה/שגיאה) */
+/* --- Status Cards --- */
 .card {
     background: white;
-    padding: 40px;
-    border-radius: 8px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    padding: 60px 40px;
+    border-radius: 20px;
+    box-shadow: var(--shadow-lg);
     text-align: center;
     max-width: 500px;
-    width: 100%;
+    width: 90%;
+    animation: fadeIn 0.5s ease;
+}
+
+.successIcon,
+.warningIcon {
+    width: 90px;
+    height: 90px;
+    font-size: 3.5rem;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto 25px;
 }
 
 .successIcon {
-    font-size: 4rem;
+    background: #e8f5e9;
     color: #4CAF50;
-    margin-bottom: 20px;
 }
 
 .warningIcon {
-    font-size: 4rem;
-    color: #f39c12;
-    margin-bottom: 20px;
+    background: #fff3e0;
+    color: #ff9800;
+}
+
+.title {
+    color: var(--text-dark);
+    font-weight: 800;
+    font-size: 1.8rem;
+    margin-bottom: 15px;
 }
 
 .error {
-    color: red;
-    margin-bottom: 10px;
-    font-weight: bold;
+    background-color: #fff5f5;
+    color: #e53e3e;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-weight: 500;
+    border: 1px solid #feb2b2;
+}
+
+/* --- Animations --- */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(40px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* --- Mobile --- */
+@media (max-width: 600px) {
+    .paper {
+        padding: 40px 5px;
+    }
+
+    .mainTitle {
+        font-size: 1.6rem;
+    }
+
+    .modalButtons {
+        flex-direction: column-reverse;
+    }
+
+    .buttonClear,
+    .buttonPrimary {
+        width: 100%;
+    }
+
+    .logoImage {
+        max-width: 160px;
+    }
+
+    .inputGroup input {
+    width: 100%;
+    padding: 16px;
+    font-size: 0.9rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    background-color: var(--white);
+    transition: var(--transition);
+    font-family: 'Rubik', sans-serif;
+    color: var(--text-dark);
+}
+
 }

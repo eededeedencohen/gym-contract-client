@@ -1,3 +1,312 @@
+// import React, { useRef, useState } from "react";
+// import SignatureCanvas from "react-signature-canvas";
+// import {
+//   createMember,
+//   uploadSignatureImage,
+//   checkSignatureExists,
+// } from "../../services/gymMemberService";
+// import styles from "./ContractPage.module.css";
+
+// // --- וודא שהקובץ קיים בנתיב זה ---
+// import LogoImage from "../../assets/images/shekel-logo.png";
+
+// const ContractPage = () => {
+//   // --- State Management ---
+//   const [formData, setFormData] = useState({
+//     fullName: "",
+//     idNumber: "",
+//   });
+
+//   const [step, setStep] = useState("form"); // 'form', 'already_signed', 'success'
+//   const [showModal, setShowModal] = useState(false);
+//   const [isSignButtonAble, setIsSignButtonAble] = useState(false);
+//   const [isSendButtonAble, setIsSendButtonAble] = useState(false);
+//   const [loading, setLoading] = useState(false);
+//   const [errorMsg, setErrorMsg] = useState("");
+
+//   const sigCanvasRef = useRef({});
+
+//   // --- Handlers ---
+//   const handleInputChange = (e) => {
+//     const { name, value } = e.target;
+//     const updatedData = { ...formData, [name]: value };
+//     setFormData(updatedData);
+
+//     // בדיקת ולידציה בסיסית
+//     if (
+//       updatedData.fullName.trim().length > 1 &&
+//       updatedData.idNumber.trim().length > 6
+//     ) {
+//       setIsSignButtonAble(true);
+//     } else {
+//       setIsSignButtonAble(false);
+//     }
+//   };
+
+//   const handleSignClick = async () => {
+//     if (!isSignButtonAble) return;
+
+//     setLoading(true);
+//     setErrorMsg("");
+
+//     try {
+//       const checkResult = await checkSignatureExists(formData.idNumber);
+
+//       if (checkResult.exists) {
+//         setStep("already_signed");
+//       } else {
+//         setShowModal(true);
+//         setIsSendButtonAble(false);
+//       }
+//     } catch (err) {
+//       console.error(err);
+//       setErrorMsg("שגיאה בתקשורת עם השרת. אנא נסה שנית.");
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   const handleCanvasBegin = () => {
+//     setIsSendButtonAble(true);
+//   };
+
+//   const handleClearSignature = () => {
+//     sigCanvasRef.current.clear();
+//     setIsSendButtonAble(false);
+//   };
+
+//   const handleSendForm = async () => {
+//     if (!isSendButtonAble) return;
+
+//     setLoading(true);
+//     try {
+//       // 1. יצירת משתמש (ניסיון אופטימי)
+//       try {
+//         await createMember({
+//           memberName: formData.fullName,
+//           memberID: formData.idNumber,
+//         });
+//       } catch (e) {
+//         console.log("Member creation info:", e.message);
+//       }
+
+//       // 2. שמירת חתימה
+//       const canvas = sigCanvasRef.current.getCanvas();
+//       const blob = await new Promise((resolve) => {
+//         canvas.toBlob(resolve, "image/png");
+//       });
+
+//       const fileName = `${formData.idNumber}.png`;
+//       await uploadSignatureImage(blob, fileName);
+
+//       setShowModal(false);
+//       setStep("success");
+//     } catch (err) {
+//       alert("שגיאה בשמירת החוזה: " + err.message);
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   // --- Render Functions (Status Screens) ---
+
+//   if (step === "success") {
+//     return (
+//       <div className={styles.container}>
+//         <div className={styles.card}>
+//           <div className={styles.successIcon}>✓</div>
+//           <h2 className={styles.title}>הטופס נשלח בהצלחה!</h2>
+//           <p style={{ fontSize: "1.1rem" }}>
+//             תודה רבה, <strong>{formData.fullName}</strong>.
+//           </p>
+//           <p
+//             style={{ color: "#7f8c8d", fontSize: "0.95rem", marginTop: "10px" }}
+//           >
+//             אישור החתימה נקלט במערכת העמותה.
+//           </p>
+//           <button
+//             className={styles.buttonPrimary}
+//             onClick={() => window.location.reload()}
+//             style={{ marginTop: "30px", width: "auto", padding: "12px 40px" }}
+//           >
+//             סיום ויציאה
+//           </button>
+//         </div>
+//       </div>
+//     );
+//   }
+
+//   if (step === "already_signed") {
+//     return (
+//       <div className={styles.container}>
+//         <div className={styles.card}>
+//           <div className={styles.warningIcon}>!</div>
+//           <h2 className={styles.title}>משתמש זה כבר חתום</h2>
+//           <p style={{ fontSize: "1.1rem" }}>
+//             מספר זהות <strong>{formData.idNumber}</strong> מופיע כבר במאגר.
+//           </p>
+//           <button
+//             className={styles.buttonSecondary}
+//             onClick={() => {
+//               setStep("form");
+//               setFormData({ fullName: "", idNumber: "" });
+//               setIsSignButtonAble(false);
+//             }}
+//             style={{ marginTop: "30px" }}
+//           >
+//             חזרה לטופס
+//           </button>
+//         </div>
+//       </div>
+//     );
+//   }
+
+//   // --- Main Render (Form) ---
+//   return (
+//     <div className={styles.container}>
+//       <div className={styles.paper}>
+//         {/* לוגו וכותרת */}
+//         <div className={styles.header}>
+//           <img src={LogoImage} alt="לוגו שק'ל" className={styles.logoImage} />
+//           <h1 className={styles.mainTitle}>הסכם שימוש ומנוי חדר כושר</h1>
+//         </div>
+
+//         {/* תוכן ההסכם */}
+//         <div className={styles.content}>
+//           <ol className={styles.rulesList}>
+//             <li>המנוי הינו לתקופה של שלושה חודשים, ומתחדש בכל רבעון.</li>
+//             <li>
+//               <strong>תנאי לזכאות:</strong> הגעה פיזית ל-3 אימונים בחודש לפחות
+//               (סה"כ 9 ביקורים ב-3 חודשים).
+//             </li>
+//             <li>
+//               העמותה משמשת כגורם מתווך ומסבסד בלבד. האחריות בתוך המתחם חלה על
+//               הנהלת חדר הכושר.
+//             </li>
+//             <li>
+//               אי עמידה במכסת הביקורים תגרור העברת זכות המנוי למקבל שירות אחר.
+//             </li>
+//             <li>ידוע לי כי חדר הכושר מדווח לעמותה על נוכחותי במתקן.</li>
+//             <li>הכניסה לחדר הכושר והסטודיו בתיאום מראש בלבד.</li>
+//             <li>
+//               לעמותה שמורה הזכות להפסיק את המנוי בהתאם לשיקול דעתה המקצועי.
+//             </li>
+//           </ol>
+
+//           <h3 className={styles.subTitle}>נהלי חדר הכושר פרופיט:</h3>
+//           <ol className={styles.rulesList}>
+//             <li>בכניסה הראשונה חובה להציג תעודה מזהה.</li>
+//             <li>
+//               השימוש במתקנים מותנה בהשלמת רישום בקבלה, חתימה על תקנון והצהרת
+//               בריאות.
+//             </li>
+//             <li>חובה להגיע לאימון בבגדי ספורט ונעלי ספורט סגורות.</li>
+//             <li>
+//               <strong>חובה להצטייד במגבת אישית בכל אימון.</strong>
+//             </li>
+//             <li>יש להקפיד על החזרת הציוד למקומו בסיום התרגיל.</li>
+//           </ol>
+
+//           <p className={styles.footerNote}>
+//             שים לב: פתיחת המנוי תתאפשר אך ורק למי שקיבל אישור פרטני (לפי שם
+//             ות.ז) מרכז התחום בעמותה.
+//           </p>
+//         </div>
+
+//         {/* טופס פרטים */}
+//         <div className={styles.formArea}>
+//           <h3>אישור ופרטי החותם</h3>
+
+//           <div className={styles.inputGroup}>
+//             <label>שם מלא</label>
+//             <input
+//               type="text"
+//               name="fullName"
+//               value={formData.fullName}
+//               onChange={handleInputChange}
+//               placeholder="הקלד\י את שמך המלא" // to do להתאים גם לגברים וגם לנשים
+//               autoComplete="name"
+//             />
+//           </div>
+//           <div className={styles.inputGroup}>
+//             <label>מספר תעודת זהות</label>
+//             <input
+//               type="text" // Text allows leading zeros
+//               name="idNumber"
+//               value={formData.idNumber}
+//               onChange={handleInputChange}
+//               placeholder="הקלד\י 9 ספרות"
+//               maxLength={9}
+//               inputMode="numeric"
+//             />
+//           </div>
+
+//           {errorMsg && <div className={styles.error}>⚠️ {errorMsg}</div>}
+
+//           <button
+//             className={`${styles.buttonPrimary} ${
+//               !isSignButtonAble ? styles.disabled : ""
+//             }`}
+//             onClick={handleSignClick}
+//             disabled={!isSignButtonAble || loading}
+//           >
+//             {loading ? "מבצע בדיקה..." : "אני מאשר/ת ומעוניין/ת לחתום"}
+//           </button>
+//         </div>
+//       </div>
+
+//       {/* Modal / Popup לחתימה */}
+//       {showModal && (
+//         <div className={styles.modalOverlay}>
+//           <div className={styles.modalContent}>
+//             <h3>חתימה דיגיטלית</h3>
+//             <p style={{ color: "#7f8c8d", marginBottom: "10px" }}>
+//               אנא חתום בתוך המסגרת באמצעות האצבע או העכבר:
+//             </p>
+
+//             <div className={styles.signatureWrapper}>
+//               <SignatureCanvas
+//                 ref={sigCanvasRef}
+//                 penColor="#2c3e50"
+//                 canvasProps={{ className: styles.sigCanvas }}
+//                 onBegin={handleCanvasBegin}
+//               />
+//             </div>
+
+//             <div className={styles.modalButtons}>
+//               <button
+//                 className={`${styles.buttonPrimary} ${
+//                   !isSendButtonAble ? styles.disabled : ""
+//                 }`}
+//                 onClick={handleSendForm}
+//                 disabled={!isSendButtonAble || loading}
+//                 style={{ width: "60%" }}
+//               >
+//                 {loading ? "שולח..." : "אשר ושלח טופס"}
+//               </button>
+//               <button
+//                 className={styles.buttonClear}
+//                 onClick={handleClearSignature}
+//               >
+//                 נקה
+//               </button>
+//             </div>
+
+//             <button
+//               className={styles.closeModal}
+//               onClick={() => setShowModal(false)}
+//             >
+//               ביטול וחזרה
+//             </button>
+//           </div>
+//         </div>
+//       )}
+//     </div>
+//   );
+// };
+
+// export default ContractPage;
+
 import React, { useRef, useState } from "react";
 import SignatureCanvas from "react-signature-canvas";
 import {
@@ -6,8 +315,9 @@ import {
   checkSignatureExists,
 } from "../../services/gymMemberService";
 import styles from "./ContractPage.module.css";
-// לוגו של שק"ל - אם יש לך קובץ תמונה שמור, ניתן לייבא אותו. כרגע נשתמש בטקסט או פלייסהולדר
-// import shekelLogo from "../../assets/shekel_logo.png";
+
+// --- וודא שהקובץ קיים בנתיב זה ---
+import LogoImage from "../../assets/images/shekel-logo.png";
 
 const ContractPage = () => {
   // --- State Management ---
@@ -16,25 +326,32 @@ const ContractPage = () => {
     idNumber: "",
   });
 
-  // States for Flowchart Logic
   const [step, setStep] = useState("form"); // 'form', 'already_signed', 'success'
   const [showModal, setShowModal] = useState(false);
   const [isSignButtonAble, setIsSignButtonAble] = useState(false);
   const [isSendButtonAble, setIsSendButtonAble] = useState(false);
-  const [loading, FLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
   const sigCanvasRef = useRef({});
 
   // --- Handlers ---
-
-  // עדכון שדות הקלט ובדיקה אם הכפתור הראשי צריך להיות פעיל
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+
+    // --- תיקון: הגבלת תעודת זהות למספרים בלבד ---
+    if (name === "idNumber") {
+      // הביטוי הרגולרי /^\d*$/ בודק שהמחרוזת מכילה רק ספרות (או ריקה)
+      if (!/^\d*$/.test(value)) {
+        return; // אם יש תו שאינו מספר, מתעלמים מהשינוי
+      }
+    }
+    // ---------------------------------------------
+
     const updatedData = { ...formData, [name]: value };
     setFormData(updatedData);
 
-    // Flowchart: "fields full name and ID full -> sign button is Able"
+    // בדיקת ולידציה בסיסית
     if (
       updatedData.fullName.trim().length > 1 &&
       updatedData.idNumber.trim().length > 6
@@ -45,116 +362,108 @@ const ContractPage = () => {
     }
   };
 
-  // לחיצה על "חתום על הנחיות"
   const handleSignClick = async () => {
     if (!isSignButtonAble) return;
 
-    FLoading(true);
+    setLoading(true);
     setErrorMsg("");
 
     try {
-      // Flowchart check: משתמש קיים במערכת? (לפי בדיקת חתימה)
       const checkResult = await checkSignatureExists(formData.idNumber);
 
       if (checkResult.exists) {
-        // Branch 1: משתמש קיים -> הודעה שהוא כבר חתם
         setStep("already_signed");
       } else {
-        // Branch 2: משתמש לא קיים -> Popup Sign
         setShowModal(true);
-        // Reset modal state
         setIsSendButtonAble(false);
       }
     } catch (err) {
       console.error(err);
-      setErrorMsg("אירעה שגיאה בבדיקת הנתונים. נסה שנית.");
+      setErrorMsg("שגיאה בתקשורת עם השרת. אנא נסה שנית.");
     } finally {
-      FLoading(false);
+      setLoading(false);
     }
   };
 
-  // זיהוי שהמשתמש התחיל לחתום
   const handleCanvasBegin = () => {
-    // Flowchart: "Signature area touched -> Send button is Able"
     setIsSendButtonAble(true);
   };
 
   const handleClearSignature = () => {
     sigCanvasRef.current.clear();
-    // Flowchart: "Click clear -> Send button disabled"
     setIsSendButtonAble(false);
   };
 
   const handleSendForm = async () => {
     if (!isSendButtonAble) return;
 
-    FLoading(true);
+    setLoading(true);
     try {
-      // 1. יצירת המשתמש במערכת (אם לא קיים)
-      // אנחנו משתמשים ב-try/catch נפרד כי יכול להיות שהוא קיים אך ללא חתימה
+      // 1. יצירת משתמש (ניסיון אופטימי)
       try {
         await createMember({
           memberName: formData.fullName,
           memberID: formData.idNumber,
         });
       } catch (e) {
-        // מתעלמים משגיאה אם המשתמש כבר קיים (למשל סטטוס 409), וממשיכים להעלאת החתימה
-        console.log(
-          "Member creation skipped or failed, proceeding to signature upload:",
-          e.message
-        );
+        console.log("Member creation info:", e.message);
       }
 
-      // 2. המרת החתימה לתמונה
+      // 2. שמירת חתימה
       const canvas = sigCanvasRef.current.getCanvas();
       const blob = await new Promise((resolve) => {
         canvas.toBlob(resolve, "image/png");
       });
 
-      // 3. העלאת החתימה
       const fileName = `${formData.idNumber}.png`;
       await uploadSignatureImage(blob, fileName);
 
-      // Flowchart: "Click send -> Success Component"
       setShowModal(false);
       setStep("success");
     } catch (err) {
       alert("שגיאה בשמירת החוזה: " + err.message);
     } finally {
-      FLoading(false);
+      setLoading(false);
     }
   };
 
-  // --- Render Functions ---
+  // --- Render Functions (Status Screens) ---
 
-  // מסך הצלחה
   if (step === "success") {
     return (
       <div className={styles.container}>
         <div className={styles.card}>
           <div className={styles.successIcon}>✓</div>
           <h2 className={styles.title}>הטופס נשלח בהצלחה!</h2>
-          <p>תודה רבה, {formData.fullName}.</p>
+          <p style={{ fontSize: "1.1rem" }}>
+            תודה רבה, <strong>{formData.fullName}</strong>.
+          </p>
+          <p
+            style={{ color: "#7f8c8d", fontSize: "0.95rem", marginTop: "10px" }}
+          >
+            אישור החתימה נקלט במערכת העמותה.
+          </p>
           <button
             className={styles.buttonPrimary}
             onClick={() => window.location.reload()}
-            style={{ marginTop: "20px" }}
+            style={{ marginTop: "30px", width: "auto", padding: "12px 40px" }}
           >
-            סיום וחזרה להתחלה
+            סיום ויציאה
           </button>
         </div>
       </div>
     );
   }
 
-  // מסך "כבר חתום"
   if (step === "already_signed") {
     return (
       <div className={styles.container}>
         <div className={styles.card}>
           <div className={styles.warningIcon}>!</div>
-          <h2 className={styles.title}>משתמש זה כבר חתום במערכת</h2>
-          <p>מספר זהות {formData.idNumber} מופיע במאגר כמי שביצע חתימה.</p>
+          <h2 className={styles.title}>משתמש זה כבר חתום</h2>
+          <p style={{ fontSize: "1.1rem" }}>
+            מספר זהות <strong>{formData.idNumber}</strong> מופיע כבר במאגר.
+          </p>
           <button
             className={styles.buttonSecondary}
             onClick={() => {
@@ -162,106 +471,96 @@ const ContractPage = () => {
               setFormData({ fullName: "", idNumber: "" });
               setIsSignButtonAble(false);
             }}
+            style={{ marginTop: "30px" }}
           >
-            חזרה
+            חזרה לטופס
           </button>
         </div>
       </div>
     );
   }
 
-  // המסך הראשי (Form)
+  // --- Main Render (Form) ---
   return (
     <div className={styles.container}>
       <div className={styles.paper}>
         {/* לוגו וכותרת */}
         <div className={styles.header}>
-          {/* ניתן להוסיף כאן תמונה עם <img src={shekelLogo} ... /> */}
-          <div className={styles.logoText}>
-            שק"ל - שילוב קהילתי לאנשים עם מוגבלויות
-          </div>
-          <h1 className={styles.mainTitle}>
-            הנחיות לשימוש במנוי חדר הכושר - שק"ל - מועדון חברתי
-          </h1>
+          <img src={LogoImage} alt="לוגו שק'ל" className={styles.logoImage} />
+          <h1 className={styles.mainTitle}>הסכם שימוש ומנוי חדר כושר</h1>
         </div>
 
-        {/* תוכן המסמך */}
+        {/* תוכן ההסכם */}
         <div className={styles.content}>
           <ol className={styles.rulesList}>
+            <li>המנוי הינו לתקופה של שלושה חודשים, ומתחדש בכל רבעון.</li>
             <li>
-              מקבל השירות מודע לכך שהמנוי ניתן לתקופה של שלושה חודשים, ומתחדש כל
-              פעם בשלושה חודשים.
+              <strong>תנאי לזכאות:</strong> הגעה פיזית ל-3 אימונים בחודש לפחות
+              (סה"כ 9 ביקורים ב-3 חודשים).
             </li>
             <li>
-              "מקבל השירות מבין כי התנאי להפעלת המנוי הוא הגעתו הפיזית ל-3
-              ביקורים בחודש לפחות (סה"כ 9 הגעות לאימון או לשיעור במהלך תקופה של
-              3 חודשים)."
+              העמותה משמשת כגורם מתווך ומסבסד בלבד. האחריות בתוך המתחם חלה על
+              הנהלת חדר הכושר.
             </li>
             <li>
-              מקבל השירות מבין ומצהיר כי רק שק"ל היא הגורם המתווך והמסבסד וכל מה
-              שקורה בחדר הכושר הוא באחריות חדר הכושר בלבד ולא של שק"ל.
+              אי עמידה במכסת הביקורים תגרור העברת זכות המנוי למקבל שירות אחר.
             </li>
+            <li>ידוע לי כי חדר הכושר מדווח לעמותה על נוכחותי במתקן.</li>
+            <li>הכניסה לחדר הכושר והסטודיו בתיאום מראש בלבד.</li>
             <li>
-              מקבל השירות מבין שאם לא יעמוד בתנאי המנוי, המנוי יועבר למקבל שירות
-              אחר ולא תוכל להיות לו טענה בנושא.
-            </li>
-            <li>
-              מקבל השירות מצהיר כי הוא מודע ומסכים לכך שחדר הכושר ידווח על
-              נוכחותו.
-            </li>
-            <li>המנוי כולל כניסה לחדר הכושר והסטודיו בתיאום מראש.</li>
-            <li>
-              לשק"ל יש את הזכות להפסיק את המנוי בהתאם לשיקול דעתה ולמקבל השירות
-              לא יהיה טענה בנושא.
+              לעמותה שמורה הזכות להפסיק את המנוי בהתאם לשיקול דעתה המקצועי.
             </li>
           </ol>
 
-          <h3 className={styles.subTitle}>
-            חדר הכושר פרופיט – כללים והנחיות לשימוש:
-          </h3>
+          <h3 className={styles.subTitle}>נהלי חדר הכושר פרופיט:</h3>
           <ol className={styles.rulesList}>
-            <li>בפעם הראשונה יש להגיע עם תעודה מזהה.</li>
+            <li>בכניסה הראשונה חובה להציג תעודה מזהה.</li>
             <li>
-              הכניסה והשימוש במתקני חדר הכושר מותנים בהשלמת הליך הרישום בקבלה,
-              הכולל חתימה על תקנון והצהרת בריאות כחוק.
+              השימוש במתקנים מותנה בהשלמת רישום בקבלה, חתימה על תקנון והצהרת
+              בריאות.
             </li>
+            <li>חובה להגיע לאימון בבגדי ספורט ונעלי ספורט סגורות.</li>
             <li>
-              חובה תמיד להגיע עם בגדי ספורט ונעלי ספורט, אחרת לא יתאפשר אימון.
+              <strong>חובה להצטייד במגבת אישית בכל אימון.</strong>
             </li>
-            <li>חובה להתאמן עם מגבת בכל אימון, ללא מגבת לא יתאפשר אימון.</li>
-            <li>יש להחזיר את המשקולות או הציוד בסיום התרגיל למקום.</li>
+            <li>יש להקפיד על החזרת הציוד למקומו בסיום התרגיל.</li>
           </ol>
 
           <p className={styles.footerNote}>
-            פתיחת כרטיס מנוי תתאפשר רק למי שקיבל אישור לפי שם ות.ז מהעמותה.
+            שים לב: פתיחת המנוי תתאפשר אך ורק למי שקיבל אישור פרטני (לפי שם
+            ות.ז) מרכז התחום בעמותה.
           </p>
         </div>
 
-        {/* אזור קלט וכפתור חתימה */}
+        {/* טופס פרטים */}
         <div className={styles.formArea}>
+          <h3>אישור ופרטי החותם</h3>
+
           <div className={styles.inputGroup}>
-            <label>שם מלא:</label>
+            <label>שם מלא</label>
             <input
               type="text"
               name="fullName"
               value={formData.fullName}
               onChange={handleInputChange}
-              placeholder="הכנס שם מלא"
+              placeholder="הקלד\י את שמך המלא"
+              autoComplete="name"
             />
           </div>
           <div className={styles.inputGroup}>
-            <label>תעודת זהות:</label>
+            <label>מספר תעודת זהות</label>
             <input
-              type="text" // שיניתי ל-text כדי לאפשר אפס מוביל במידת הצורך
+              type="text" // נשאר Text כדי לאפשר אפס מוביל
               name="idNumber"
               value={formData.idNumber}
               onChange={handleInputChange}
-              placeholder="הכנס מספר ת.ז"
+              placeholder="הקלד\י 9 ספרות"
               maxLength={9}
+              inputMode="numeric" // פותח מקלדת מספרים בנייד
             />
           </div>
 
-          {errorMsg && <div className={styles.error}>{errorMsg}</div>}
+          {errorMsg && <div className={styles.error}>⚠️ {errorMsg}</div>}
 
           <button
             className={`${styles.buttonPrimary} ${
@@ -270,7 +569,7 @@ const ContractPage = () => {
             onClick={handleSignClick}
             disabled={!isSignButtonAble || loading}
           >
-            {loading ? "בודק..." : "חתום על הנחיות"}
+            {loading ? "מבצע בדיקה..." : "אני מאשר/ת ומעוניין/ת לחתום"}
           </button>
         </div>
       </div>
@@ -280,12 +579,14 @@ const ContractPage = () => {
         <div className={styles.modalOverlay}>
           <div className={styles.modalContent}>
             <h3>חתימה דיגיטלית</h3>
-            <p>אנא חתום בתיבה למטה:</p>
+            <p style={{ color: "#7f8c8d", marginBottom: "10px" }}>
+              אנא חתום בתוך המסגרת באמצעות האצבע או העכבר:
+            </p>
 
             <div className={styles.signatureWrapper}>
               <SignatureCanvas
                 ref={sigCanvasRef}
-                penColor="black"
+                penColor="#2c3e50"
                 canvasProps={{ className: styles.sigCanvas }}
                 onBegin={handleCanvasBegin}
               />
@@ -293,26 +594,28 @@ const ContractPage = () => {
 
             <div className={styles.modalButtons}>
               <button
-                className={styles.buttonClear}
-                onClick={handleClearSignature}
-              >
-                נקה חתימה
-              </button>
-              <button
                 className={`${styles.buttonPrimary} ${
                   !isSendButtonAble ? styles.disabled : ""
                 }`}
                 onClick={handleSendForm}
                 disabled={!isSendButtonAble || loading}
+                style={{ width: "60%" }}
               >
-                {loading ? "שולח..." : "שלח טופס"}
+                {loading ? "שולח..." : "אשר ושלח טופס"}
+              </button>
+              <button
+                className={styles.buttonClear}
+                onClick={handleClearSignature}
+              >
+                נקה
               </button>
             </div>
+
             <button
               className={styles.closeModal}
               onClick={() => setShowModal(false)}
             >
-              ביטול
+              ביטול וחזרה
             </button>
           </div>
         </div>
