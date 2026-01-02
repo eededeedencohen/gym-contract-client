@@ -2,12 +2,12 @@ import React, { useEffect, useState, useRef } from "react";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import styles from "./AdminPage.module.css";
-// ייבוא הסטיילים של דף החוזה
+// ייבוא הסטיילים של דף החוזה כדי להבטיח זהות מוחלטת
 import contractStyles from "../ContractPage/ContractPage.module.css";
 import { getAllMembers } from "../../services/gymMemberService";
 import { DOMAIN } from "../../constants";
 import LogoImage from "../../assets/images/shekel-logo.png";
-import eyeSVG from "../../assets/icons/eye.svg";
+import EyeIcon from "../../assets/icons/eye.svg";
 
 const AdminPage = () => {
   const [members, setMembers] = useState([]);
@@ -31,9 +31,20 @@ const AdminPage = () => {
     }
   };
 
+  const getSigningDate = (member) => {
+    if (member.createdAt) {
+      return new Date(member.createdAt).toLocaleDateString("he-IL");
+    }
+    if (member._id) {
+      const timestamp = parseInt(member._id.substring(0, 8), 16) * 1000;
+      return new Date(timestamp).toLocaleDateString("he-IL");
+    }
+    return "לא ידוע";
+  };
+
   const handleViewContract = (member) => {
     setSelectedMember(member);
-    document.body.style.overflow = "hidden"; // מניעת גלילה של דף הרקע
+    document.body.style.overflow = "hidden";
   };
 
   const handleCloseModal = () => {
@@ -42,27 +53,73 @@ const AdminPage = () => {
   };
 
   const handleDownloadPDF = async () => {
-    const element = contractRef.current;
-    if (!element) return;
+    if (!contractRef.current) return;
 
-    // הסתרת הכפתור זמנית או וידוא שלא מצלמים אותו (הוא מחוץ ל-REF אז זה בסדר)
+    // 1. יצירת שכפול של האלמנט (כדי לא לשנות את מה שרואים על המסך)
+    const clone = contractRef.current.cloneNode(true);
+
+    // 2. כפיית עיצוב דסקטופ על השכפול
+    // הגדרות כלליות לנייר
+    clone.style.width = "800px"; // רוחב קבוע של דסקטופ
+    clone.style.maxWidth = "none";
+    clone.style.minHeight = "auto";
+    clone.style.padding = "70px 60px"; // ה-Padding של הדסקטופ
+    clone.style.margin = "0";
+    clone.style.position = "fixed";
+    clone.style.top = "-10000px"; // הסתרה מחוץ למסך
+    clone.style.left = "0";
+    clone.style.zIndex = "-1000";
+    clone.style.backgroundColor = "#ffffff";
+    clone.style.direction = "rtl"; // וידוא כיוון
+
+    // תיקון כותרת (שתהיה גדולה כמו בדסקטופ)
+    const title = clone.querySelector('[data-id="header-title"]');
+    if (title) title.style.fontSize = "2.2rem";
+
+    // תיקון שורת החתימות (שורה אחת במקום עמודה)
+    const sigRow = clone.querySelector('[data-id="signature-row"]');
+    if (sigRow) {
+      sigRow.style.display = "flex";
+      sigRow.style.flexDirection = "row"; // שורה!
+      sigRow.style.justifyContent = "space-between";
+      sigRow.style.alignItems = "flex-end";
+      sigRow.style.gap = "20px";
+    }
+
+    // תיקון אזור הפרטים
+    const sigDetails = clone.querySelector('[data-id="signature-details"]');
+    if (sigDetails) {
+      sigDetails.style.width = "auto";
+      sigDetails.style.textAlign = "right";
+    }
+
+    // תיקון אזור התמונה
+    const sigImage = clone.querySelector('[data-id="signature-image"]');
+    if (sigImage) {
+      sigImage.style.width = "auto";
+      sigImage.style.marginTop = "0";
+      sigImage.style.minWidth = "200px";
+      sigImage.style.textAlign = "center";
+    }
+
+    // 3. הוספת השכפול ל-body (חובה כדי ש-html2canvas יוכל לצלם אותו)
+    document.body.appendChild(clone);
+
     try {
-      const canvas = await html2canvas(element, {
-        scale: 2,
+      // 4. צילום השכפול
+      const canvas = await html2canvas(clone, {
+        scale: 2, // איכות גבוהה
         useCORS: true,
         backgroundColor: "#ffffff",
-        // הגדרות חשובות למניעת חיתוך
-        windowWidth: element.scrollWidth,
-        windowHeight: element.scrollHeight,
-        x: 0,
-        y: 0,
+        windowWidth: 1200, // מדמה מסך רחב
       });
 
+      // 5. יצירת PDF
       const imgData = canvas.toDataURL("image/png");
       const imgWidthPx = canvas.width;
       const imgHeightPx = canvas.height;
 
-      const pdfWidth = 210;
+      const pdfWidth = 210; // A4 width mm
       const pdfHeight = (imgHeightPx * pdfWidth) / imgWidthPx;
 
       const pdf = new jsPDF({
@@ -76,6 +133,9 @@ const AdminPage = () => {
     } catch (error) {
       console.error("Error generating PDF:", error);
       alert("שגיאה ביצירת ה-PDF");
+    } finally {
+      // 6. ניקוי - מחיקת השכפול
+      document.body.removeChild(clone);
     }
   };
 
@@ -92,7 +152,7 @@ const AdminPage = () => {
             <tr>
               <th>שם מלא</th>
               <th>תעודת זהות</th>
-              <th>מזהה מערכת</th>
+              <th>תאריך חתימה</th>
               <th style={{ width: "60px" }}>צפייה</th>
             </tr>
           </thead>
@@ -118,10 +178,32 @@ const AdminPage = () => {
             ) : (
               members.map((member) => (
                 <tr key={member._id}>
-                  <td>{member.memberName}</td>
-                  <td>{member.memberID}</td>
-                  <td style={{ fontSize: "0.8em", color: "#999" }}>
-                    {member._id}
+                  <td>
+                    <div
+                      className={styles.mobileLabel}
+                      style={{ display: "none" }}
+                    >
+                      שם:
+                    </div>
+                    {member.memberName}
+                  </td>
+                  <td>
+                    <div
+                      className={styles.mobileLabel}
+                      style={{ display: "none" }}
+                    >
+                      ת.ז:
+                    </div>
+                    {member.memberID}
+                  </td>
+                  <td>
+                    <div
+                      className={styles.mobileLabel}
+                      style={{ display: "none" }}
+                    >
+                      תאריך:
+                    </div>
+                    {getSigningDate(member)}
                   </td>
                   <td>
                     <button
@@ -129,7 +211,11 @@ const AdminPage = () => {
                       onClick={() => handleViewContract(member)}
                       title="צפה בחוזה החתום"
                     >
-                      👁️
+                      <img
+                        src={EyeIcon}
+                        alt="צפייה"
+                        className={styles.eyeIcon}
+                      />
                     </button>
                   </td>
                 </tr>
@@ -142,32 +228,31 @@ const AdminPage = () => {
       {/* --- Modal Structure --- */}
       {selectedMember && (
         <div className={styles.overlayContainer}>
-          {/* 1. Backdrop (Click to close) */}
+          <button className={styles.mobileCloseBtn} onClick={handleCloseModal}>
+            ✕
+          </button>
+
           <div className={styles.backdrop} onClick={handleCloseModal}></div>
 
-          {/* 2. Scrollable Content Area */}
           <div
             className={styles.scrollContainer}
             onClick={(e) => {
-              // סגירה בלחיצה על החלק הריק בצדדים
               if (e.target === e.currentTarget) handleCloseModal();
             }}
           >
             <div className={styles.contractWrapper}>
-              {/* הנייר עצמו - משתמשים בעיצוב המקורי + התאמות */}
               <div
                 ref={contractRef}
                 className={contractStyles.paper}
-                // דריסה ידנית של פדינג למובייל כדי להבטיח התאמה
                 style={{
                   margin: "0 auto",
                   minHeight: "auto",
+                  // שימוש ב-inline style דינמי למובייל - לא משפיע על ההורדה כי אנחנו משכפלים ודורסים
                   padding: window.innerWidth < 600 ? "30px 20px" : "70px 60px",
-                  pointerEvents: "none", // מניעת אינטראקציה
+                  pointerEvents: "none",
                   userSelect: "none",
                 }}
               >
-                {/* --- Header --- */}
                 <div className={contractStyles.header}>
                   <img
                     src={LogoImage}
@@ -175,6 +260,7 @@ const AdminPage = () => {
                     className={contractStyles.logoImage}
                   />
                   <h1
+                    data-id="header-title"
                     className={contractStyles.mainTitle}
                     style={{
                       fontSize: window.innerWidth < 600 ? "1.5rem" : "2.2rem",
@@ -184,7 +270,6 @@ const AdminPage = () => {
                   </h1>
                 </div>
 
-                {/* --- Content --- */}
                 <div className={contractStyles.content}>
                   <ol className={contractStyles.rulesList}>
                     <li>
@@ -257,6 +342,7 @@ const AdminPage = () => {
                   </h3>
 
                   <div
+                    data-id="signature-row"
                     style={{
                       display: "flex",
                       flexDirection: window.innerWidth < 600 ? "column" : "row",
@@ -265,11 +351,12 @@ const AdminPage = () => {
                     }}
                   >
                     <div
+                      data-id="signature-details"
                       style={{
                         lineHeight: "1.8",
                         fontSize: "1rem",
                         color: "#333",
-                        width: "100%",
+                        width: window.innerWidth < 600 ? "100%" : "auto",
                       }}
                     >
                       <div>
@@ -279,16 +366,17 @@ const AdminPage = () => {
                         <strong>תעודת זהות:</strong> {selectedMember.memberID}
                       </div>
                       <div>
-                        <strong>תאריך:</strong>{" "}
-                        {new Date().toLocaleDateString("he-IL")}
+                        <strong>תאריך:</strong> {getSigningDate(selectedMember)}
                       </div>
                     </div>
 
                     <div
+                      data-id="signature-image"
                       style={{
                         textAlign: "center",
                         minWidth: "180px",
                         width: window.innerWidth < 600 ? "100%" : "auto",
+                        marginTop: window.innerWidth < 600 ? "20px" : "0",
                       }}
                     >
                       <div
@@ -332,7 +420,6 @@ const AdminPage = () => {
             </div>
           </div>
 
-          {/* 3. Fixed Footer Button (מחוץ לגלילה!) */}
           <div className={styles.fixedButtonContainer}>
             <button
               className={styles.downloadButton}

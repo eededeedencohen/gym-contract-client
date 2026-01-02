@@ -11,7 +11,7 @@ function App() {
   return (
     <>
       {/* Use the MainPage component */}
-      <AdminPage />
+      <ContractPage />
     </>
   );
 }
