@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
+import { logoutAdmin } from "../../services/authService";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import styles from "./AdminPage.module.css";
@@ -142,7 +143,28 @@ const AdminPage = () => {
   return (
     <div className={styles.pageContainer}>
       <div className={styles.header}>
-        <h1>ממשק ניהול - חדר כושר</h1>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <h1>ממשק ניהול - חדר כושר</h1>
+          <button
+            onClick={logoutAdmin}
+            style={{
+              background: "#e74c3c",
+              color: "white",
+              border: "none",
+              padding: "8px 15px",
+              borderRadius: "4px",
+              cursor: "pointer",
+            }}
+          >
+            התנתק
+          </button>
+        </div>
         <p>רשימת חברים שחתמו על ההסכם</p>
       </div>
 
