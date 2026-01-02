@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { logoutAdmin } from "../../services/authService";
+
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import styles from "./AdminPage.module.css";
@@ -143,29 +144,22 @@ const AdminPage = () => {
   return (
     <div className={styles.pageContainer}>
       <div className={styles.header}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          <h1>ממשק ניהול - חדר כושר</h1>
-          <button
-            onClick={logoutAdmin}
-            style={{
-              background: "#e74c3c",
-              color: "white",
-              border: "none",
-              padding: "8px 15px",
-              borderRadius: "4px",
-              cursor: "pointer",
-            }}
-          >
-            התנתק
+        <div className={styles.headerContent}>
+          <div className={styles.brandArea}>
+            <div className={styles.logoContainer}>
+              <img src={LogoImage} alt="Shekel" className={styles.headerLogo} />
+            </div>
+            <div className={styles.titles}>
+              <h1>ממשק ניהול</h1>
+              <span className={styles.subTitle}>חוזי חדר כושר</span>
+            </div>
+          </div>
+
+          <button onClick={logoutAdmin} className={styles.logoutBtn}>
+            <span className={styles.logoutText}>התנתק</span>
+            <span className={styles.logoutIcon}>➔</span>
           </button>
         </div>
-        <p>רשימת חברים שחתמו על ההסכם</p>
       </div>
 
       <div className={styles.tableContainer}>
