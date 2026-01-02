@@ -1,23 +1,16 @@
-/* ייבוא פונט Rubik נקי ומודרני */
+/* src/pages/ContractPage/ContractPage.module.css */
 @import url('https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;700;800&display=swap');
 
 :root {
-    /* פלטת צבעים */
     --primary-color: #8E44AD;
-    /* סגול מותג */
     --primary-dark: #732d91;
     --accent-color: #FFA500;
-    /* כתום לפעולות */
     --accent-hover: #ff8c00;
-
     --text-dark: #2c3e50;
     --text-medium: #555;
     --text-light: #7f8c8d;
-
     --bg-color: #f4f6f9;
     --white: #ffffff;
-
-    /* אפקטים */
     --shadow-sm: 0 4px 6px rgba(0, 0, 0, 0.02);
     --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.08);
     --radius: 16px;
@@ -27,7 +20,6 @@
 .container {
     min-height: 100vh;
     background-color: var(--bg-color);
-    /* טקסטורת נקודות עדינה ברקע */
     background-image: radial-gradient(#d1d1d1 1px, transparent 1px);
     background-size: 24px 24px;
     padding: 40px 20px;
@@ -66,7 +58,6 @@
     width: 100%;
     height: auto;
     margin-bottom: 30px;
-    /* צללית סגולה עדינה שנותנת עומק ללוגו */
     filter: drop-shadow(0 10px 15px rgba(142, 68, 173, 0.15));
     animation: fadeDown 0.8s ease-out;
 }
@@ -132,7 +123,6 @@
     width: 28px;
     height: 28px;
     background-color: #f3eff6;
-    /* רקע סגול בהיר מאוד */
     color: var(--primary-color);
     font-weight: 700;
     font-size: 0.95rem;
@@ -147,7 +137,6 @@
     margin-top: 40px;
     padding: 20px;
     background-color: #FFF8E1;
-    /* צהוב עדין */
     border-right: 5px solid var(--accent-color);
     font-weight: 500;
     color: #795548;
@@ -252,6 +241,15 @@
     border-color: #cbd5e0;
 }
 
+.buttonGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
 .buttonClear {
     padding: 12px 30px;
     background-color: #fff;
@@ -277,7 +275,6 @@
     bottom: 0;
     background-color: rgba(30, 30, 40, 0.6);
     backdrop-filter: blur(8px);
-    /* טשטוש יוקרתי לרקע */
     display: flex;
     justify-content: center;
     align-items: center;
@@ -393,6 +390,12 @@
     border: 1px solid #feb2b2;
 }
 
+/* --- Print Only Section --- */
+.printOnly {
+    display: none;
+    /* Hidden by default */
+}
+
 /* --- Animations --- */
 @keyframes fadeIn {
     from {
@@ -452,15 +455,74 @@
     }
 
     .inputGroup input {
-    width: 100%;
-    padding: 16px;
-    font-size: 0.9rem;
-    border: 2px solid #e2e8f0;
-    border-radius: 10px;
-    background-color: var(--white);
-    transition: var(--transition);
-    font-family: 'Rubik', sans-serif;
-    color: var(--text-dark);
+        width: 100%;
+        padding: 16px;
+        font-size: 0.9rem;
+    }
 }
 
+/* --- Print Styles --- */
+@media print {
+
+    /* Hide Everything in the body initially */
+    .card,
+    .modalOverlay,
+    .buttonPrimary,
+    .buttonSecondary {
+        display: none !important;
+    }
+
+    /* Reset container styles for print */
+    .container {
+        background: white;
+        background-image: none;
+        padding: 0;
+        margin: 0;
+        min-height: auto;
+        display: block;
+    }
+
+    /* Show the print-only section */
+    .printOnly {
+        display: block !important;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        background: white;
+        z-index: 9999;
+        padding: 40px;
+        color: black;
+    }
+
+    .printHeader {
+        text-align: center;
+        margin-bottom: 30px;
+        border-bottom: 2px solid #eee;
+        padding-bottom: 20px;
+    }
+
+    .printLogo {
+        max-width: 150px;
+        margin-bottom: 10px;
+    }
+
+    .printSignatureSection {
+        margin-top: 50px;
+        border-top: 1px solid #ccc;
+        padding-top: 20px;
+        page-break-inside: avoid;
+    }
+
+    .printSignatureBox {
+        margin-top: 20px;
+    }
+
+    .finalSignature {
+        max-width: 250px;
+        border: 1px solid #ddd;
+        padding: 10px;
+        margin-top: 10px;
+        display: block;
+    }
 }
